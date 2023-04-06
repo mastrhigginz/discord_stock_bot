@@ -1,0 +1,24 @@
+def roic_per_year(jsonData):
+    income_statement = jsonData["incomeStatementHistory"]["incomeStatementHistory"]
+    balance_sheet = jsonData["balanceSheetHistory"]["balanceSheetStatements"]
+
+    financial_data = {}
+    roic_per_year = []
+
+    for item in income_statement:
+        date = item["endDate"]["fmt"]
+        ebit = item["ebit"]["raw"]
+        effective_tax_rate = item["incomeTaxExpense"]["raw"] / item["incomeBeforeTax"]["raw"]
+        no_pat = ebit * (1 - effective_tax_rate)
+        financial_data[date] = {"no_pat": no_pat}
+
+    for item in balance_sheet:
+        date = item["endDate"]["fmt"]
+        invested_capital = (item["totalLiab"]["raw"] + item["totalStockholderEquity"]["raw"]) - item["totalCurrentLiabilities"]["raw"]
+        financial_data[date].update({"invested_capital": invested_capital})
+
+    for date, values in financial_data.items():
+            roic_percentage = (values["no_pat"] / values["invested_capital"])
+            roic_per_year.append(roic_percentage)
+    
+    return roic_per_year
